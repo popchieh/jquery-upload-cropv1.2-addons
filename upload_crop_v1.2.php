@@ -20,9 +20,12 @@
 */
 error_reporting (E_ALL ^ E_NOTICE);
 session_start(); //Do not remove this
+$_SESSION['aid'] = '1'; // get it from SESSION and database
+
 //only assign a new timestamp if the session variable is empty
 if (!isset($_SESSION['random_key']) || strlen($_SESSION['random_key'])==0){
-    $_SESSION['random_key'] = strtotime(date('Y-m-d H:i:s')); //assign the timestamp to the session variable
+    // $_SESSION['random_key'] = strtotime(date('Y-m-d H:i:s')); //assign the timestamp to the session variable
+	$_SESSION['random_key'] = $_SESSION['aid']; //assign the timestamp to the session variable
 	$_SESSION['user_file_ext']= "";
 }
 #########################################################################################################
@@ -349,16 +352,62 @@ $(window).load(function () {
 //Display error message if there are any
 if(strlen($error)>0){
 	echo "<ul><li><strong>Error!</strong></li><li>".$error."</li></ul>";
-}
+?>
+	<h2>Upload Photo</h2>
+	<form name="photo" enctype="multipart/form-data" action="<?php echo $_SERVER["PHP_SELF"];?>" method="post">
+	Photo <input type="file" name="image" size="30" /> <button class="btn btn-primary" type="submit" name="upload">Upload</button>
+	</form>
+<?php }?>
+<?php
 if(strlen($large_photo_exists)>0 && strlen($thumb_photo_exists)>0){
-	echo $large_photo_exists."&nbsp;".$thumb_photo_exists;
+	if ($_SESSION['user_file_ext'] == ".jpg") {
+		// delete the pic of other type which the same aid owns
+		if (file_exists($upload_path.$thumb_image_name.".png"))
+			unlink($upload_path.$thumb_image_name.".png");
+		else if (file_exists($upload_path.$thumb_image_name.".gif"))
+			unlink($upload_path.$thumb_image_name.".gif");
+		// delete the temperary big pic
+		unlink($upload_path.$large_image_name.".jpg");
+	} else if ($_SESSION['user_file_ext'] == ".png") {
+		// delete the pic of other type which the same aid owns
+		if (file_exists($upload_path.$thumb_image_name.".jpg"))
+			unlink($upload_path.$thumb_image_name.".jpg");
+		else if (file_exists($upload_path.$thumb_image_name.".gif"))
+			unlink($upload_path.$thumb_image_name.".gif");
+		// delete the temperary big pic
+		unlink($upload_path.$large_image_name.".png");
+	} else if ($_SESSION['user_file_ext'] == ".gif") {
+		// delete the pic of other type which the same aid owns
+		if (file_exists($upload_path.$thumb_image_name.".png"))
+			unlink($upload_path.$thumb_image_name.".png");
+		else if (file_exists($upload_path.$thumb_image_name.".jpg"))
+			unlink($upload_path.$thumb_image_name.".jpg");
+		// delete the temperary big pic
+		unlink($upload_path.$large_image_name.".gif");
+	}
+	
+	// echo $large_photo_exists."&nbsp;".$thumb_photo_exists;
+	echo $thumb_photo_exists;
 	echo "<p><a href=\"".$_SERVER["PHP_SELF"]."?a=delete&t=".$_SESSION['random_key'].$_SESSION['user_file_ext']."\">Delete images</a></p>";
 	echo "<p><a href=\"".$_SERVER["PHP_SELF"]."\">Upload another</a></p>";
 	//Clear the time stamp session and user file extension
 	$_SESSION['random_key']= "";
 	$_SESSION['user_file_ext']= "";
 }else{
-		if(strlen($large_photo_exists)>0){?>
+		if(!isset($_POST["upload"]) && strlen($large_photo_exists)==0){
+			if (file_exists("upload_pic/thumbnail_".$_SESSION['aid'].".jpg"))
+				echo "<img src=\"upload_pic/thumbnail_".$_SESSION['aid'].".jpg\" />";
+			else if (file_exists("upload_pic/thumbnail_".$_SESSION['aid'].".png"))
+				echo "<img src=\"upload_pic/thumbnail_".$_SESSION['aid'].".png\" />";
+			else if (file_exists("upload_pic/thumbnail_".$_SESSION['aid'].".gif"))
+				echo "<img src=\"upload_pic/thumbnail_".$_SESSION['aid'].".gif\" />";
+?>
+	<h2>Upload Photo</h2>
+	<form name="photo" enctype="multipart/form-data" action="<?php echo $_SERVER["PHP_SELF"];?>" method="post">
+	Photo <input type="file" name="image" size="30" /> <input type="submit" name="upload" value="Upload" />
+	</form>
+	<?php } ?>
+	<?php if(strlen($large_photo_exists)>0){?>
 		<h2>Create Thumbnail</h2>
 		<div align="center">
 			<img src="<?php echo $upload_path.$large_image_name.$_SESSION['user_file_ext'];?>" style="float: left; margin-right: 10px;" id="thumbnail" alt="Create Thumbnail" />
@@ -378,10 +427,6 @@ if(strlen($large_photo_exists)>0 && strlen($thumb_photo_exists)>0){
 		</div>
 	<hr />
 	<?php 	} ?>
-	<h2>Upload Photo</h2>
-	<form name="photo" enctype="multipart/form-data" action="<?php echo $_SERVER["PHP_SELF"];?>" method="post">
-	Photo <input type="file" name="image" size="30" /> <input type="submit" name="upload" value="Upload" />
-	</form>
 <?php } ?>
 <!-- Copyright (c) 2008 http://www.webmotionuk.com -->
 </body>
